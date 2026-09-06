@@ -35,6 +35,7 @@ jobs:
           mkdir -p /tmp/money-action-source
           unzip -q /tmp/money-action-source.zip -d /tmp/money-action-source
           cp -a /tmp/money-action-source/. .
+          sed -i 's/node-version: 20/node-version: 22/' .github/workflows/android-debug.yml
           rm -rf .bootstrap
           rm -f .github/workflows/bootstrap-source.yml
 
