@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MoneyAction</string>
+    <string name="title_activity_main">MoneyAction</string>
+    <string name="package_name">com.smile.moneyaction</string>
+    <string name="custom_url_scheme">com.smile.moneyaction</string>
+</resources>

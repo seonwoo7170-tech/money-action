@@ -1,0 +1,12 @@
+name = "money-action-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "money-action"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[vars]
+ALLOWED_ORIGIN = "*"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
