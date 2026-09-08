@@ -2,6 +2,14 @@ name: Deploy MoneyAction API
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/**'
+      - 'backend/schema.sql'
+      - 'backend/package.json'
+      - 'backend/tsconfig.json'
+      - '.github/workflows/deploy-api.yml'
 
 permissions:
   contents: write
