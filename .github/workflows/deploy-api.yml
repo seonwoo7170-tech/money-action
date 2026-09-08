@@ -118,6 +118,7 @@ jobs:
           sleep 3
           curl -fsS "${WORKER_URL}/api/health" | tee /tmp/health.json
           echo
+          jq -e '.ok == true and .version == "0.1.2"' /tmp/health.json >/dev/null
           echo "### MoneyAction API deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "- Worker: ${WORKER_URL}" >> "$GITHUB_STEP_SUMMARY"
           echo "- D1: money-action" >> "$GITHUB_STEP_SUMMARY"
@@ -127,11 +128,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PAYLOAD='{"nickname":"SmokeTest","monthlyIncome":0,"targetIncome":500,"weeklyHours":5,"skills":["writing"],"interests":["content"],"experience":"I can write simple how-to content and use AI tools.","locale":"en","market":"US","currency":"USD","timeZone":"America/New_York"}'
+          PAYLOAD='{"nickname":"SmokeTest","monthlyIncome":0,"targetIncome":500,"weeklyHours":5,"skills":["writing"],"interests":["content"],"experience":"beginner","locale":"en","market":"US","currency":"USD","timeZone":"America/New_York"}'
           HTTP_CODE=$(curl -sS -o /tmp/plan.json -w '%{http_code}' \
             -X POST "${WORKER_URL}/api/plan" \
             -H 'content-type: application/json' \
-            -H "x-device-id: deploy-smoke-${GITHUB_RUN_ID}" \
+            -H "x-device-id: deploy-plan-smoke-${GITHUB_RUN_ID}" \
             --data "$PAYLOAD")
           cat /tmp/plan.json
           echo
@@ -139,9 +140,84 @@ jobs:
           jq -e '.selectedPath.name | strings | length > 0' /tmp/plan.json >/dev/null
           jq -e '.alternatives | length == 2' /tmp/plan.json >/dev/null
           jq -e '.missions | length == 7' /tmp/plan.json >/dev/null
+          jq -e '.missions[0].why | strings | length > 0' /tmp/plan.json >/dev/null
+          jq -e '.missions[0].question | strings | length > 0' /tmp/plan.json >/dev/null
+          jq -e '.missions[0].suggestions | length == 3' /tmp/plan.json >/dev/null
+          jq -e '.missions[0].deliverable | strings | length > 0' /tmp/plan.json >/dev/null
           jq -e '.milestones | length == 3' /tmp/plan.json >/dev/null
           echo "Gemini plan generation passed."
           echo "- Gemini plan smoke test: passed" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Interactive mission coaching smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/mission-payload.json <<'JSON'
+          {
+            "profile": {
+              "nickname": "SmokeTest",
+              "monthlyIncome": 0,
+              "targetIncome": 500,
+              "weeklyHours": 5,
+              "skills": ["writing"],
+              "interests": ["content"],
+              "experience": "beginner",
+              "locale": "en",
+              "market": "US",
+              "currency": "USD",
+              "timeZone": "America/New_York"
+            },
+            "selectedPath": {
+              "id": "content-service",
+              "name": "Practical content service",
+              "summary": "Create useful content for small businesses.",
+              "fitScore": 88,
+              "firstRevenueDays": 14,
+              "priceIdea": "$50-$150 test offer",
+              "reason": "Matches writing skills and limited weekly time."
+            },
+            "mission": {
+              "id": "m1",
+              "day": 1,
+              "title": "Choose the first customer problem",
+              "description": "Pick one narrow problem to solve first.",
+              "minutes": 20,
+              "category": "prepare",
+              "done": false,
+              "why": "A narrow problem makes the first offer easier to test.",
+              "question": "Which problem will you solve first?",
+              "suggestions": ["Google Business Profile posts for local salons", "FAQ content for local repair shops", "Short product guides for small online stores"],
+              "deliverable": "One saved customer problem",
+              "successSignal": "You can describe the customer and problem in one sentence."
+            },
+            "answer": "FAQ content for local repair shops",
+            "priorResults": [],
+            "nextMission": {
+              "id": "m2",
+              "day": 2,
+              "title": "Create the first offer",
+              "description": "Turn the chosen problem into a simple offer.",
+              "minutes": 30,
+              "category": "build",
+              "done": false
+            }
+          }
+          JSON
+          HTTP_CODE=$(curl -sS -o /tmp/mission.json -w '%{http_code}' \
+            -X POST "${WORKER_URL}/api/mission/answer" \
+            -H 'content-type: application/json' \
+            -H "x-device-id: deploy-mission-smoke-${GITHUB_RUN_ID}" \
+            --data-binary @/tmp/mission-payload.json)
+          cat /tmp/mission.json
+          echo
+          test "$HTTP_CODE" = "200" || { echo "Mission coaching API returned HTTP $HTTP_CODE"; exit 1; }
+          jq -e '.feedback | strings | length > 0' /tmp/mission.json >/dev/null
+          jq -e '.refinedOutput | strings | length > 0' /tmp/mission.json >/dev/null
+          jq -e '.nextMission.title | strings | length > 0' /tmp/mission.json >/dev/null
+          jq -e '.nextMission.description | strings | length > 0' /tmp/mission.json >/dev/null
+          jq -e '.nextMission.suggestions | length == 3' /tmp/mission.json >/dev/null
+          echo "Interactive mission coaching passed."
+          echo "- Interactive mission coaching smoke test: passed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist D1 binding ID
         shell: bash
