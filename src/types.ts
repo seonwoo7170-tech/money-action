@@ -24,6 +24,15 @@ export type Mission = {
   minutes: number;
   category: MissionCategory;
   done: boolean;
+  why?: string;
+  question?: string;
+  suggestions?: string[];
+  deliverable?: string;
+  successSignal?: string;
+  userAnswer?: string;
+  aiFeedback?: string;
+  refinedOutput?: string;
+  completedAt?: string;
 };
 
 export type IncomePath = {
@@ -44,6 +53,12 @@ export type ActionPlan = {
   missions: Mission[];
   milestones: { day: number; title: string; target: string }[];
   generatedAt: string;
+};
+
+export type MissionFeedback = {
+  feedback: string;
+  refinedOutput: string;
+  nextMission?: Partial<Pick<Mission, 'title' | 'description' | 'why' | 'question' | 'suggestions' | 'deliverable' | 'successSignal'>>;
 };
 
 export type AppState = {
