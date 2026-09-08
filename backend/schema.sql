@@ -14,3 +14,11 @@ CREATE TABLE IF NOT EXISTS usage_daily (
   generation_count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY(device_hash, usage_date)
 );
+
+CREATE TABLE IF NOT EXISTS usage_feature_daily (
+  device_hash TEXT NOT NULL,
+  usage_date TEXT NOT NULL,
+  feature TEXT NOT NULL,
+  usage_count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(device_hash, usage_date, feature)
+);
