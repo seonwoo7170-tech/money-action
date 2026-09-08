@@ -123,6 +123,26 @@ jobs:
           echo "- D1: money-action" >> "$GITHUB_STEP_SUMMARY"
           echo "- Gemini model: gemini-3.5-flash-lite" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Gemini plan smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD='{"nickname":"SmokeTest","monthlyIncome":0,"targetIncome":500,"weeklyHours":5,"skills":["writing"],"interests":["content"],"experience":"I can write simple how-to content and use AI tools.","locale":"en","market":"US","currency":"USD","timeZone":"America/New_York"}'
+          HTTP_CODE=$(curl -sS -o /tmp/plan.json -w '%{http_code}' \
+            -X POST "${WORKER_URL}/api/plan" \
+            -H 'content-type: application/json' \
+            -H "x-device-id: deploy-smoke-${GITHUB_RUN_ID}" \
+            --data "$PAYLOAD")
+          cat /tmp/plan.json
+          echo
+          test "$HTTP_CODE" = "200" || { echo "Plan API returned HTTP $HTTP_CODE"; exit 1; }
+          jq -e '.selectedPath.name | strings | length > 0' /tmp/plan.json >/dev/null
+          jq -e '.alternatives | length == 2' /tmp/plan.json >/dev/null
+          jq -e '.missions | length == 7' /tmp/plan.json >/dev/null
+          jq -e '.milestones | length == 3' /tmp/plan.json >/dev/null
+          echo "Gemini plan generation passed."
+          echo "- Gemini plan smoke test: passed" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Persist D1 binding ID
         shell: bash
         run: |
