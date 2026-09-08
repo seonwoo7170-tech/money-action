@@ -53,6 +53,7 @@ jobs:
           fi
 
           test -n "$DB_ID" || { echo "Could not resolve D1 database ID"; exit 1; }
+          export D1_DATABASE_ID="$DB_ID"
           echo "D1 database ready."
           echo "D1_DATABASE_ID=$DB_ID" >> "$GITHUB_ENV"
 
